@@ -2,15 +2,10 @@ package main
 
 import (
     "fmt"
+    "log"
     "net/http"
     "regexp"
 )
-
-type Spot struct {
-   lat float
-   lon float
-   alt float
-}
 
 var validPath = regexp.MustCompile("^/(users|locations)/([a-zA-Z0-9]*)$")
 
@@ -23,13 +18,32 @@ func userHandler(writer http.ResponseWriter, request *http.Request, extras strin
 }
 
 func locationHandler(writer http.ResponseWriter, request *http.Request, extras string) {
-   fmt.Fprintf(writer, "%s + %s", request.URL.Path[1:], extras)
+   switch request.Method {
+      case "GET":
+         //not allowed
+         log.Printf("%s %s %s", request.Method, request.URL.Path, http.StatusMethodNotAllowed)
+         writer.WriteHeader(http.StatusMethodNotAllowed)
+      case "POST":
+         //
+         fmt.Fprintf(writer, "%s + %s inside post", request.URL.Path[1:], extras)
+      case "PUT":
+         //
+         fmt.Fprintf(writer, "%s + %s inside put", request.URL.Path[1:], extras)
+      case "DELETE":
+         //not allowed
+         log.Printf("%s %s %s", request.Method, request.URL.Path, http.StatusMethodNotAllowed)
+         writer.WriteHeader(http.StatusMethodNotAllowed)
+      default:
+         //die
+         log.Printf("%s %s %s", request.Method, request.URL.Path, http.StatusBadRequest)
+         writer.WriteHeader(http.StatusBadRequest)
+   }
 }
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
     return func(writer http.ResponseWriter, request *http.Request) {
         matches := validPath.FindStringSubmatch(request.URL.Path)
-        if m == nil {
+        if matches == nil {
             http.NotFound(writer, request)
             return
         }
@@ -41,7 +55,8 @@ func main() {
     http.HandleFunc("/", mainHandler)
     http.HandleFunc("/users/", makeHandler(userHandler))
     http.HandleFunc("/locations/", makeHandler(locationHandler))
-    http.ListenAndServe(":8080", nil)
+    
+    log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 
