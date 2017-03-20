@@ -25,9 +25,9 @@ var routes = Routes{
         Users,
     },
     Route{
-        "Locations",
+        "SpotsCreate",
         "POST",
-        "/locations",
-        Locations,
+        "/spots",
+        SpotsCreate,
     },
 }
